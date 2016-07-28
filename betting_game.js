@@ -1,7 +1,9 @@
 
 var bankroll = 100;
 // var MIN = 5; USED for alert w/o JQ
-var LIMIT = 10;
+var BET_MIN = 5;
+var BET_MAX = 10;
+var GUESS_LIMIT = 10;
 
 
 //Reusing code for prompting bet & guess in other functions
@@ -11,13 +13,20 @@ var LIMIT = 10;
 // }
 
 
+
 //Using JQuery
 
+function appendResult(s){
+	var new_p = $("<p>", {text:s});
+	$("#result p").replaceWith(new_p);
+}
+
 function youWon(){
-	$("#result").append("You Won!")
+	appendResult("You Wo!");
 }
 function youLost(){
-	$("#result").append("You Lost...")
+	// $("#result").append("You Lost...")
+	appendResult("You Lo!");
 }
 function getBet(){
 	var bet = $(document.getElementById("bet")).val()
@@ -28,9 +37,19 @@ function getGuess(){
 	return guess
 };
 
-function numberIsValid(number,limit) {
-	return !isNaN(number) && (number > 0) && (number <= limit);
+function numberIsValid(number, lowerLimit, upperLimit) {
+	// Jeremy has concerns about this use of isNaN
+	//    (but cannot actually come up with a bug)
+	return !isNaN(number) && (number >= lowerLimit) && (number <= upperLimit);
 };
+
+function isValidBet(x){
+	return numberIsValid(x, BET_MIN, BET_MAX);
+}
+
+function isValidGuess(x){
+	return numberIsValid(x, 1, GUESS_LIMIT);
+}
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
@@ -44,39 +63,41 @@ function addBet(bet){
 	bankroll += bet
 };
 
-function moneyz(){
+function display_bankroll(){
 	// confirm(bankroll); add bankroll as param when using alert
-	return $("#result").append("Money left: " + bankroll)
+	// return $("#result").append("Money left: " + bankroll)
+	appendResult("Money left:" + bankroll);
 	
 };
-//TODO ALERT IF NOT NUMBER
-$(document).ready(function(){
+
+
+$(function(){
 	$("#form_one").on('submit', function(event){
 			console.log("when submit button")
 			event.preventDefault();
 
-			var bet = +getBet();
+			var bet = Number(getBet());
 			var guess = +getGuess();
 
-			if (bet > bankroll){alert("Bet less, you don't have enough")};
-			if (bankroll === 0){confirm("Play again?"); bankroll = 100}
-
-			if ((numberIsValid(bet,LIMIT) && numberIsValid(guess,LIMIT)) && bankroll >= 5){
-				if(guess === getRandomInt(1,10)){
-					//TODO: have a way to call "You won" string
-					youWon()
-					moneyz()
-					addBet(bet)
-				}
-				else {
-					lessBet(bet)
-					youLost()
-					moneyz()
-					//TODO: have a way to call "You lost" string
-					
-				};
+			//TODO create button and apply play again function
+			if (bankroll < BET_MIN){
+				confirm("Play again?");
+			//TODO reset bankroll somewhere else; trigger by button perhaps
+				bankroll = 100
 			}
-			else {alert("Not a number or number higher than max bet amount, try again.")}
+
+			if (isValidGuess(guess) && isValidBet(bet) && bet <= bankroll){
+				if(guess === getRandomInt(1,10)){
+					youWon()
+					addBet(bet)
+				} else {
+					youLost()
+					lessBet(bet)
+				}
+				display_bankroll();
+			} else {
+				alert("Not a number or number higher than max bet amount, try again.")
+			};
 			
 	});
 });
